@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Tennis Performance Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="theme-color" content="#1FB8CD">
+    <meta name="description" content="Personal table tennis performance tracking app">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiVFQgVHJhY2tlciIsInNob3J0X25hbWUiOiJUVCBUcmFja2VyIiwic3RhcnRfdXJsIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwidGhlbWVfY29sb3IiOiIjMUZCOENEIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmY2ZjZjkiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M00zVnViM0puTHpJd01EQXZjM1puSWlCM2FXUjBhRDBpTWpRaUlHaGxhV2RvZEQwaU1qUWlJSFpwWlhkQ2IzZzlJakFnTUNBeU5DQXlOQ0krUEhSbGVIUWdlRDBpTVRJaUlIazlJakUxSWlCbWFXeHNQU0lqTVVaQ09FTkVJajQrVkVRZ1ZISmhZMnRsY2p3dmRHVjRkRDQ4TDNOMlp6ND0iLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="container">
+            <h1 class="app-title">🏓 TT Tracker</h1>
+            <div class="header-actions">
+                <button class="btn btn--sm btn--outline" id="exportDataBtn">Export Data</button>
+                <button class="btn btn--sm btn--secondary" id="importDataBtn">Import Data</button>
+                <input type="file" id="importFileInput" accept=".json" style="display: none;">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <div class="container">
+                <div class="dashboard-header">
+                    <h2>Performance Overview</h2>
+                    <div class="quick-stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalMatches">0</div>
+                            <div class="stat-label">Total Matches</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="winRate">0%</div>
+                            <div class="stat-label">Win Rate</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="trainingStreak">0</div>
+                            <div class="stat-label">Training Streak</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalTrainingHours">0h</div>
+                            <div class="stat-label">Total Training</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-content">
+                    <div class="quick-actions">
+                        <h3>Quick Actions</h3>
+                        <div class="action-buttons">
+                            <button class="action-btn" data-section="training">
+                                <span class="action-icon">🏃</span>
+                                <span class="action-text">Log Training</span>
+                            </button>
+                            <button class="action-btn" data-section="matches">
+                                <span class="action-icon">🏓</span>
+                                <span class="action-text">Record Match</span>
+                            </button>
+                            <button class="action-btn" data-section="analytics">
+                                <span class="action-icon">📊</span>
+                                <span class="action-text">View Analytics</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="recent-activities">
+                        <h3>Recent Activities</h3>
+                        <div id="recentActivitiesList" class="activities-list"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Training Section -->
+        <section id="training" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Training Tracker</h2>
+                    <div class="section-tabs">
+                        <button class="tab-btn active" data-tab="log-training">Log Training</button>
+                        <button class="tab-btn" data-tab="training-history">History</button>
+                    </div>
+                </div>
+
+                <div id="log-training" class="tab-content active">
+                    <div class="card">
+                        <div class="card__body">
+                            <form id="trainingForm">
+                                <div class="form-group">
+                                    <label class="form-label" for="trainingDate">Date</label>
+                                    <input type="date" id="trainingDate" class="form-control" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label" for="trainingDuration">Duration (minutes)</label>
+                                    <div class="duration-input">
+                                        <input type="range" id="trainingDurationSlider" min="15" max="240" value="60" class="duration-slider">
+                                        <input type="number" id="trainingDuration" class="form-control duration-number" min="15" max="240" value="60" required>
+                                    </div>
+                                    <div class="duration-presets">
+                                        <button type="button" class="btn btn--sm btn--outline preset-btn" data-duration="30">30min</button>
+                                        <button type="button" class="btn btn--sm btn--outline preset-btn" data-duration="60">60min</button>
+                                        <button type="button" class="btn btn--sm btn--outline preset-btn" data-duration="90">90min</button>
+                                        <button type="button" class="btn btn--sm btn--outline preset-btn" data-duration="120">120min</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="drillCategory">Drill Category</label>
+                                    <select id="drillCategory" class="form-control" required>
+                                        <option value="">Select drill category</option>
+                                        <option value="Footwork & Movement">Footwork & Movement</option>
+                                        <option value="Forehand Techniques (Loop, Drive, Push)">Forehand Techniques (Loop, Drive, Push)</option>
+                                        <option value="Backhand Techniques (Loop, Drive, Push)">Backhand Techniques (Loop, Drive, Push)</option>
+                                        <option value="Serve Practice (Pendulum, Reverse, Side Spin)">Serve Practice (Pendulum, Reverse, Side Spin)</option>
+                                        <option value="Receive Training">Receive Training</option>
+                                        <option value="Multi-ball Drills">Multi-ball Drills</option>
+                                        <option value="Match Play/Sparring">Match Play/Sparring</option>
+                                        <option value="Physical Fitness">Physical Fitness</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="trainingNotes">Notes (Optional)</label>
+                                    <textarea id="trainingNotes" class="form-control" rows="3" placeholder="Add any observations or reflections..."></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn--primary btn--full-width">Save Training Session</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="training-history" class="tab-content">
+                    <div class="history-filters">
+                        <div class="filter-group">
+                            <label class="form-label" for="trainingDateFilter">Filter by Date</label>
+                            <input type="month" id="trainingDateFilter" class="form-control">
+                        </div>
+                        <div class="filter-group">
+                            <label class="form-label" for="drillCategoryFilter">Filter by Category</label>
+                            <select id="drillCategoryFilter" class="form-control">
+                                <option value="">All Categories</option>
+                                <option value="Footwork & Movement">Footwork & Movement</option>
+                                <option value="Forehand Techniques (Loop, Drive, Push)">Forehand Techniques (Loop, Drive, Push)</option>
+                                <option value="Backhand Techniques (Loop, Drive, Push)">Backhand Techniques (Loop, Drive, Push)</option>
+                                <option value="Serve Practice (Pendulum, Reverse, Side Spin)">Serve Practice (Pendulum, Reverse, Side Spin)</option>
+                                <option value="Receive Training">Receive Training</option>
+                                <option value="Multi-ball Drills">Multi-ball Drills</option>
+                                <option value="Match Play/Sparring">Match Play/Sparring</option>
+                                <option value="Physical Fitness">Physical Fitness</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="trainingHistoryList" class="history-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Matches Section -->
+        <section id="matches" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Match Logger</h2>
+                    <div class="section-tabs">
+                        <button class="tab-btn active" data-tab="log-match">Log Match</button>
+                        <button class="tab-btn" data-tab="match-history">History</button>
+                    </div>
+                </div>
+
+                <div id="log-match" class="tab-content active">
+                    <div class="card">
+                        <div class="card__body">
+                            <form id="matchForm">
+                                <div class="form-group">
+                                    <label class="form-label" for="matchDate">Date</label>
+                                    <input type="date" id="matchDate" class="form-control" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="matchType">Match Type</label>
+                                    <select id="matchType" class="form-control" required>
+                                        <option value="">Select match type</option>
+                                        <option value="Friendly">Friendly</option>
+                                        <option value="Tournament">Tournament</option>
+                                        <option value="Team Match">Team Match</option>
+                                        <option value="League">League</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="opponent">Opponent Name</label>
+                                    <input type="text" id="opponent" class="form-control" list="opponentsList" required>
+                                    <datalist id="opponentsList"></datalist>
+                                </div>
+
+                                <div class="score-section">
+                                    <h4>Match Score</h4>
+                                    <div class="score-inputs">
+                                        <div class="score-group">
+                                            <label class="form-label">Games Won (You)</label>
+                                            <input type="number" id="gamesWon" class="form-control" min="0" max="7" value="0" required>
+                                        </div>
+                                        <div class="score-group">
+                                            <label class="form-label">Games Lost (Opponent)</label>
+                                            <input type="number" id="gamesLost" class="form-control" min="0" max="7" value="0" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label" for="gameScores">Individual Game Scores (Optional)</label>
+                                        <input type="text" id="gameScores" class="form-control" placeholder="e.g., 11-9, 8-11, 11-6">
+                                        <small class="form-help">Separate scores with commas (format: 11-9, 8-11, 11-6)</small>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Emotional Tags</label>
+                                    <div class="tag-selection" id="emotionalTags">
+                                        <label class="tag-item">
+                                            <input type="checkbox" value="Confident">
+                                            <span>Confident</span>
+                                        </label>
+                                        <label class="tag-item">
+                                            <input type="checkbox" value="Nervous">
+                                            <span>Nervous</span>
+                                        </label>
+                                        <label class="tag-item">
+                                            <input type="checkbox" value="Clutch Performance">
+                                            <span>Clutch Performance</span>
+                                        </label>
+                                        <label class="tag-item">
+                                            <input type="checkbox" value="Focused">
+                                            <span>Focused</span>
+                                        </label>
+                                        <label class="tag-item">
+                                            <input type="checkbox" value="Pressured">
+                                            <span>Pressured</span>
+                                        </label>
+                                        <label class="tag-item">
+                                            <input type="checkbox" value="Relaxed">
+                                            <span>Relaxed</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="matchDuration">Match Duration (minutes - optional)</label>
+                                    <input type="number" id="matchDuration" class="form-control" min="5" max="300" placeholder="e.g., 45">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="matchNotes">Tactical Notes (Optional)</label>
+                                    <textarea id="matchNotes" class="form-control" rows="3" placeholder="Tactical observations, what worked/didn't work..."></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn--primary btn--full-width">Save Match</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="match-history" class="tab-content">
+                    <div class="history-filters">
+                        <div class="filter-group">
+                            <label class="form-label" for="matchDateFilter">Filter by Date</label>
+                            <input type="month" id="matchDateFilter" class="form-control">
+                        </div>
+                        <div class="filter-group">
+                            <label class="form-label" for="matchTypeFilter">Filter by Type</label>
+                            <select id="matchTypeFilter" class="form-control">
+                                <option value="">All Types</option>
+                                <option value="Friendly">Friendly</option>
+                                <option value="Tournament">Tournament</option>
+                                <option value="Team Match">Team Match</option>
+                                <option value="League">League</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="matchHistoryList" class="history-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics" class="section">
+            <div class="container">
+                <h2>Performance Analytics</h2>
+                
+                <div class="analytics-content">
+                    <div class="chart-container">
+                        <h3>Training Consistency (Last 8 Weeks)</h3>
+                        <canvas id="trainingChart" width="400" height="300"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>Drill Distribution</h3>
+                        <canvas id="drillChart" width="400" height="300"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>Win/Loss Ratio</h3>
+                        <canvas id="winLossChart" width="400" height="300"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>Performance by Match Type</h3>
+                        <canvas id="matchTypeChart" width="400" height="300"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>Training vs Match Performance</h3>
+                        <canvas id="performanceTrendChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-section="dashboard">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" data-section="training">
+            <span class="nav-icon">🏃</span>
+            <span class="nav-label">Training</span>
+        </button>
+        <button class="nav-item" data-section="matches">
+            <span class="nav-icon">🏓</span>
+            <span class="nav-label">Matches</span>
+        </button>
+        <button class="nav-item" data-section="analytics">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Analytics</span>
+        </button>
+    </nav>
+
+    <!-- Success/Error Messages -->
+    <div id="messageContainer" class="message-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
